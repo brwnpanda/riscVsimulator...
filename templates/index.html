@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISC-V Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .code-editor {
+            width: 100%;
+            height: 400px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            resize: vertical;
+            background: #ffffff;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 100px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .registers {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .register {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .register.changed {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        
+        .register-name {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 12px;
+        }
+        
+        .register-value {
+            font-size: 14px;
+            color: #212529;
+        }
+        
+        .info-box {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        
+        .info-value {
+            font-family: 'Courier New', monospace;
+            color: #212529;
+        }
+        
+        .examples {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .example-btn {
+            padding: 8px 15px;
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+        
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .execution-log {
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .registers {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 RISC-V Simulator</h1>
+            <p>A complete web-based RV32I instruction set simulator</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="section">
+                <div class="section-title">Assembly Code Editor</div>
+                <textarea id="codeEditor" class="code-editor" placeholder="Enter RISC-V assembly code here...
+Example:
+addi x1, x0, 10
+addi x2, x0, 20
+add x3, x1, x2
+ecall"></textarea>
+                
+                <div class="examples">
+                    <strong>Examples:</strong>
+                    {% for example in examples %}
+                    <button class="example-btn" onclick="loadExample('{{ example }}')">{{ example }}</button>
+                    {% endfor %}
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="loadCode()">Load Code</button>
+                    <button class="btn btn-success" onclick="stepExecution()">Step</button>
+                    <button class="btn btn-warning" onclick="runExecution()">Run</button>
+                    <button class="btn btn-danger" onclick="resetSimulator()">Reset</button>
+                </div>
+                
+                <div id="status"></div>
+                
+                <div class="info-box">
+                    <div class="section-title" style="margin-bottom: 10px;">CPU Info</div>
+                    <div class="info-row">
+                        <span class="info-label">Program Counter:</span>
+                        <span class="info-value" id="pc">0x00000000</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Instructions Executed:</span>
+                        <span class="info-value" id="instCount">0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="info-value" id="runStatus">Ready</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Registers</div>
+                <div class="registers" id="registers"></div>
+                
+                <div style="margin-top: 20px;">
+                    <div class="section-title">Execution Log (Last 10 instructions)</div>
+                    <div class="execution-log" id="executionLog">
+                        No instructions executed yet
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let registerNames = [];
+        let lastRegisterValues = new Array(32).fill(0);
+        
+        async function loadCode() {
+            const code = document.getElementById('codeEditor').value;
+            const response = await fetch('/api/load', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code: code})
+            });
+            
+            const data = await response.json();
+            showStatus(data.success, data.message);
+            
+            if (data.success) {
+                registerNames = data.register_names;
+                updateDisplay(data.state);
+            }
+        }
+        
+        async function stepExecution() {
+            const response = await fetch('/api/step', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            
+            const data = await response.json();
+            showStatus(data.success, data.message);
+            updateDisplay(data.state);
+        }
+        
+        async function runExecution() {
+            const response = await fetch('/api/run', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({max_steps: 10000})
+            });
+            
+            const data = await response.json();
+            showStatus(data.success, data.message);
+            updateDisplay(data.state);
+        }
+        
+        async function resetSimulator() {
+            const response = await fetch('/api/reset', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+            
+            const data = await response.json();
+            showStatus(data.success, data.message);
+            updateDisplay(data.state);
+        }
+        
+        async function loadExample(name) {
+            const response = await fetch(`/api/example/${name}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('codeEditor').value = data.code;
+                showStatus(true, `Loaded example: ${name}`);
+            }
+        }
+        
+        function updateDisplay(state) {
+            // Update PC
+            document.getElementById('pc').textContent = `0x${state.pc.toString(16).padStart(8, '0')}`;
+            
+            // Update instruction count
+            document.getElementById('instCount').textContent = state.instruction_count;
+            
+            // Update run status
+            document.getElementById('runStatus').textContent = state.running ? 'Running' : 'Halted';
+            
+            // Update registers
+            const registersDiv = document.getElementById('registers');
+            registersDiv.innerHTML = '';
+            
+            for (let i = 0; i < 32; i++) {
+                const regDiv = document.createElement('div');
+                regDiv.className = 'register';
+                
+                if (state.registers[i] !== lastRegisterValues[i]) {
+                    regDiv.classList.add('changed');
+                }
+                
+                const regName = registerNames[i] || `x${i}`;
+                const regValue = state.registers[i];
+                
+                regDiv.innerHTML = `
+                    <div class="register-name">${regName}</div>
+                    <div class="register-value">0x${regValue.toString(16).padStart(8, '0')}</div>
+                    <div class="register-value">${regValue}</div>
+                `;
+                
+                registersDiv.appendChild(regDiv);
+                lastRegisterValues[i] = regValue;
+            }
+            
+            // Update execution log
+            const logDiv = document.getElementById('executionLog');
+            if (state.execution_log && state.execution_log.length > 0) {
+                logDiv.innerHTML = '';
+                state.execution_log.forEach(entry => {
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+                    
+                    let changedRegs = '';
+                    if (entry.registers_changed && entry.registers_changed.length > 0) {
+                        changedRegs = ' | Changes: ' + entry.registers_changed.map(r => 
+                            `x${r.reg}=${r.new}`
+                        ).join(', ');
+                    }
+                    
+                    logEntry.textContent = `PC: 0x${entry.pc.toString(16).padStart(8, '0')} | ` +
+                                          `Inst: ${entry.instruction_hex}${changedRegs}`;
+                    logDiv.appendChild(logEntry);
+                });
+            }
+        }
+        
+        function showStatus(success, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${success ? 'success' : 'error'}`;
+            statusDiv.textContent = message;
+        }
+        
+        // Initialize display
+        window.onload = async function() {
+            const response = await fetch('/api/state');
+            const data = await response.json();
+            registerNames = data.register_names;
+            updateDisplay(data.state);
+        };
+    </script>
+</body>
+</html>
