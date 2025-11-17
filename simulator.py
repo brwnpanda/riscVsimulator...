@@ -39,9 +39,17 @@ class RISCVSimulator:
         if self.cpu.instruction_count >= self.cpu.max_instructions:
             return False, "Maximum instruction count reached"
         
+        # Check if PC is within program bounds
+        if self.cpu.pc >= self.cpu.program_size:
+            return False, "Program counter out of bounds (end of program)"
+        
         try:
             # Fetch instruction
             instruction = self.cpu.read_memory(self.cpu.pc, 4)
+            
+            # Check for invalid instruction (all zeros)
+            if instruction == 0:
+                return False, "Invalid instruction (0x0) - end of program"
             
             # Record state before execution
             old_pc = self.cpu.pc
