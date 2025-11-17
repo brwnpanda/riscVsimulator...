@@ -22,6 +22,7 @@ class RISCVCPUCore:
         self.running = False
         self.instruction_count = 0
         self.max_instructions = 10000  # Safety limit
+        self.program_size = 0  # Track loaded program size in bytes
         
     def reset(self):
         """Reset CPU state"""
@@ -29,6 +30,7 @@ class RISCVCPUCore:
         self.pc = 0
         self.running = False
         self.instruction_count = 0
+        self.program_size = 0
         
     def read_register(self, reg_num):
         """Read from a register"""
@@ -77,6 +79,7 @@ class RISCVCPUCore:
             addr = start_address + (i * 4)
             self.write_memory(addr, instruction, 4)
         self.pc = start_address
+        self.program_size = len(instructions) * 4  # Track program size in bytes
         
     def sign_extend(self, value, bits):
         """Sign extend a value from 'bits' bits to 32 bits"""
